@@ -35,6 +35,37 @@ def test_extract_audio_url_handles_missing_sources():
     assert main.extract_audio_url(episode) == (None, 0)
 
 
+def test_set_itunes_image_accepts_and_skips_by_extension():
+    class FakePodcast:
+        def __init__(self):
+            self.value = None
+
+        def itunes_image(self, url):
+            self.value = url
+
+    class FakeEntry:
+        def __init__(self):
+            self.podcast = FakePodcast()
+
+    # A plain jpg/png is accepted, including with a query string
+    e = FakeEntry()
+    main.set_itunes_image(e, "https://cdn.podimo.com/a/cover.jpg")
+    assert e.podcast.value == "https://cdn.podimo.com/a/cover.jpg"
+
+    e = FakeEntry()
+    main.set_itunes_image(e, "https://cdn.podimo.com/a/cover.png?width=640")
+    assert e.podcast.value == "https://cdn.podimo.com/a/cover.png?width=640"
+
+    # No usable extension: skipped rather than raising
+    e = FakeEntry()
+    main.set_itunes_image(e, "https://cdn.podimo.com/a/cover")
+    assert e.podcast.value is None
+
+    e = FakeEntry()
+    main.set_itunes_image(e, None)
+    assert e.podcast.value is None
+
+
 def test_chunks():
     assert list(main.chunks([1, 2, 3, 4, 5], 2)) == [[1, 2], [3, 4], [5]]
 

@@ -23,7 +23,7 @@ import re
 import traceback
 from hashlib import sha256
 from mimetypes import guess_type
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 import cloudscraper
 from aiohttp import ClientSession, ClientTimeout, CookieJar
@@ -339,13 +339,25 @@ def extract_audio_url(episode):
     return url, duration
 
 
+def set_itunes_image(target, image_url):
+    # feedgen 1.0 rejects itunes image URLs that don't end in png/jpg. Podimo's
+    # image URLs often carry a query string or no extension, so only set the
+    # image when it passes that check and skip it otherwise (the feed is still
+    # valid without per-item artwork) rather than failing the whole feed.
+    if not image_url:
+        return
+    path = urlsplit(image_url).path.lower()
+    if path.endswith((".png", ".jpg", ".jpeg")):
+        target.podcast.itunes_image(image_url)
+
+
 async def addFeedEntry(fg, episode, session, locale):
     fe = fg.add_entry()
     fe.guid(episode["id"])
     fe.title(episode["title"])
     fe.description(episode["description"])
     fe.pubDate(episode.get("publishDatetime", episode.get("datetime")))
-    fe.podcast.itunes_image(episode["imageUrl"])
+    set_itunes_image(fe, episode["imageUrl"])
 
     url, duration = extract_audio_url(episode)
     if url is None:
