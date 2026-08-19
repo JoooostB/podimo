@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: sigstore/cosign-installer@v3
+      - uses: sigstore/cosign-installer@v4.1.2
 
       # QEMU enables building linux/arm64 on the amd64 runner
       - uses: docker/setup-qemu-action@v4
