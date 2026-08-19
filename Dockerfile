@@ -1,7 +1,7 @@
 # Build stage: install dependencies into a virtualenv with uv.
 # uv comes from PyPI rather than ghcr.io/astral-sh/uv so the build
 # only depends on Docker Hub and PyPI.
-FROM python:3.13-alpine AS builder
+FROM python:3.14-alpine AS builder
 
 WORKDIR /src
 
@@ -20,7 +20,7 @@ RUN uv sync --frozen --no-install-project --no-dev
 COPY . .
 
 # Runtime stage: just Python, the virtualenv and the application
-FROM python:3.13-alpine
+FROM python:3.14-alpine
 
 WORKDIR /src
 
