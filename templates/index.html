@@ -70,13 +70,13 @@
       <legend>The show</legend>
       <div class="group__fields">
         <div class="field">
-          <label for="podcast_id">Podcast ID</label>
+          <label for="podcast_id">Show link or ID</label>
           <p class="hint" id="podcast_id-hint">
-            The last part of the show's web address:
-            <code>open.podimo.com/podcast/<strong>this-part</strong></code>
+            Paste the show's Podimo link, like
+            <code>open.podimo.com/podcast/<strong>&hellip;</strong></code>, or just the ID from the end of it.
           </p>
-          <input type="text" name="podcast_id" id="podcast_id" class="mono" required pattern="[0-9a-fA-F\-]+"
-            title="A podcast ID contains only the letters a&ndash;f, digits, and hyphens."
+          <input type="text" name="podcast_id" id="podcast_id" class="mono" required
+            placeholder="open.podimo.com/podcast/&hellip;"
             autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="podcast_id-hint">
         </div>
 

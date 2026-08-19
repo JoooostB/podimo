@@ -66,6 +66,15 @@ def test_set_itunes_image_accepts_and_skips_by_extension():
     assert e.podcast.value is None
 
 
+def test_extract_podcast_id():
+    pid = "26b40936-8fa4-4c28-b038-16dc05db09a4"
+    assert main.extract_podcast_id(pid) == pid
+    assert main.extract_podcast_id(f"https://open.podimo.com/podcast/{pid}") == pid
+    assert main.extract_podcast_id(f"https://open.podimo.com/podcast/{pid}/") == pid
+    assert main.extract_podcast_id(f"  https://open.podimo.com/nl-nl/podcast/{pid}  ") == pid
+    assert main.extract_podcast_id(None) is None
+
+
 def test_chunks():
     assert list(main.chunks([1, 2, 3, 4, 5], 2)) == [[1, 2], [3, 4], [5]]
 

@@ -151,6 +151,19 @@ async def check_auth(username, password, region, locale, scraper):
 podcast_id_pattern = re.compile(r"[0-9a-fA-F\-]+")
 
 
+def extract_podcast_id(value):
+    # Accept either a bare podcast id or a pasted Podimo URL such as
+    # https://open.podimo.com/podcast/<id>, taking the last path segment
+    if value is None:
+        return value
+    value = value.strip()
+    if "podimo.com" in value or value.startswith(("http://", "https://")):
+        path = urlsplit(value).path.rstrip("/")
+        if path:
+            value = path.rsplit("/", 1)[-1]
+    return value
+
+
 @app.route("/", methods=["POST", "GET"])
 async def index():
     errors = []
@@ -158,7 +171,7 @@ async def index():
         form = await request.form
         email = form.get("email")
         password = form.get("password")
-        podcast_id = form.get("podcast_id")
+        podcast_id = extract_podcast_id(form.get("podcast_id"))
         region = form.get("region")
         locale = form.get("locale")
 
