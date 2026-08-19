@@ -17,11 +17,12 @@
 # See the Licence for the specific language governing
 # permissions and limitations under the Licence.
 
-from email.utils import parseaddr
-from random import choice, randint
-from hashlib import sha256
 import asyncio
-from functools import wraps, partial
+from email.utils import parseaddr
+from functools import partial, wraps
+from hashlib import sha256
+from random import choice, randint
+
 
 def randomHexId(length: int):
     string = []
@@ -38,10 +39,9 @@ def randomFlyerId():
 
 
 def token_key(username, password):
-    key = sha256(
-        b"~".join([username.encode("utf-8"), password.encode("utf-8")])
-    ).hexdigest()
+    key = sha256(b"~".join([username.encode("utf-8"), password.encode("utf-8")])).hexdigest()
     return key
+
 
 # Verify if it is actually an email address
 def is_correct_email_address(username):
@@ -50,21 +50,23 @@ def is_correct_email_address(username):
 
 def generateHeaders(authorization, locale):
     headers = {
-        'user-os': 'android',
-        'user-agent': 'Podimo/2.45.1 build 566/Android 33',
-        'user-version': '2.45.1',
-        'user-locale': locale,
-        "user-unique-id": randomHexId(16)
+        "user-os": "android",
+        "user-agent": "Podimo/2.45.1 build 566/Android 33",
+        "user-version": "2.45.1",
+        "user-locale": locale,
+        "user-unique-id": randomHexId(16),
     }
     if authorization:
         headers["authorization"] = authorization
     return headers
 
+
 def async_wrap(func):
     @wraps(func)
     async def run(*args, loop=None, executor=None, **kwargs):
         if loop is None:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
         pfunc = partial(func, *args, **kwargs)
         return await loop.run_in_executor(executor, pfunc)
+
     return run

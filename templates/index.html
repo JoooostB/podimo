@@ -1,61 +1,141 @@
 {% extends "base.html" %}
 
+{% block title %}Podimo to RSS{% endblock %}
+
 {% block body %}
-<h1>Podimo-to-RSS converter</h1>
-This program converts shows on Podimo to an RSS feed that can be used with
-any normal podcast player.
+<div class="card">
+  <p class="lockup" aria-hidden="true">
+    <span class="chip">podimo</span>
+    <span class="lockup__arrow">&rarr;</span>
+    <span class="chip">rss</span>
+  </p>
 
-<details>
-  <summary>Using Apple/Facebook/Google to log in to Podimo?</summary>
-    <ol>
-      <u>Try the following steps:</u>
-      <li>Login at Podimo like you normally would</li>
-      <li>Find the email address associated with your account. For Apple, this looks something like <em>abcdefg@privaterelay.appleid.com</em>. You should be able to find them somewhere on the settings page.</li>
-      <li>Logout of Podimo.</li>
-      <li>Instead of logging in to Podimo like normal, use the "Forgot password" form to reset your password. Put the email address from step 2 in here.</li>
-      <li>Reset your password with the link from in your mailbox.</li>
-      <li>You should now be able to login to Podimo with the email address from step 2 and the password you just created. You don't have to use the Sign in with Apple/Facebook/Google buttons anymore.</li>
-      <li>Verify that you can login to Podimo with your new credentials. If you can, then <em>you are able to use this site!</em></li>
-    </ol>
-</details>
+  <h1>Turn a Podimo show into an RSS feed</h1>
+  <p class="lede">
+    Point this at a show you can already listen to on Podimo and it hands you a private feed URL.
+    Add that URL to any podcast app that supports private feeds, and new episodes arrive there.
+  </p>
 
-{% if error %}
-<u><h2>Error: {{ error }}</h2></u>
-{% endif %}
-
-<form action="./" method="post">
-  {% if need_credentials %}
-  <label for="email">Your Podimo email address</label> <br />
-  <input type="email" required placeholder="Podimo email address" name="email" id="email"><br />
-
-  <label for="password">Your Podimo password</label><br />
-  <input type="password" required placeholder="Podimo password" name="password" id="password"><br />
+  {% if errors %}
+  {#
+    Error summary. role="alert" announces it on arrival, and tabindex/autofocus
+    move keyboard focus here on page load so the problem is the first thing a
+    keyboard or screen reader user lands on. No JavaScript involved.
+  #}
+  <div class="panel panel--error" role="alert" tabindex="-1" autofocus>
+    <p class="panel__title">
+      <span class="badge" aria-hidden="true">!</span>
+      {% if errors|length == 1 %}Fix this before continuing{% else %}Fix these before continuing{% endif %}
+    </p>
+    <ul>
+      {% for message in errors %}
+      <li>{{ message }}</li>
+      {% endfor %}
+    </ul>
+  </div>
   {% endif %}
-  
-  <label for="podcast_id">Podcast ID (https://open.podimo.com/podcast/<b>THIS IS THE ID</b>)</label><br />
-  <input placeholder="Podcast ID" required name="podcast_id" id="podcast_id" pattern="[0-9a-fA-F\-]+"><br />
 
-  <label for="region">Region</label><br />
-  <select name="region" id="region">
-    {% for (country_code, region) in regions %}
-    <option value="{{country_code}}">{{ region }}</option>
-    {% endfor %}
-  </select>
-  <br />
+  {% if not need_credentials %}
+  <div class="panel panel--accent">
+    <p>This server signs in with its own Podimo account, so you only need the show details.</p>
+  </div>
+  {% endif %}
 
-  <label for="locale">Locale</label><br />
-  <select name="locale" id="locale">
-    {% for locale in locales %}
-    <option>{{ locale }}</option>
-    {% endfor %}
-  </select>
+  <form action="./" method="post">
+    {% if need_credentials %}
+    <fieldset class="group">
+      <legend>Your Podimo account</legend>
+      <div class="group__fields">
+        <div class="field">
+          <label for="email">Email address</label>
+          <p class="hint" id="email-hint">The address you use to sign in to Podimo.</p>
+          <input type="email" name="email" id="email" required autocomplete="username" spellcheck="false"
+            aria-describedby="email-hint">
+        </div>
 
-  <footer>
-    Licensed under the EUPL-1.2 license - Source on <a href="https://github.com/ThijsRay/podimo">GitHub</a><br />
-    If you find this useful, consider <a href="https://www.buymeacoffee.com/thijsr">buying me a coffee ☕</a> - It's greatly appreciated!
-  </footer>
+        <div class="field">
+          <label for="password">Password</label>
+          <p class="hint" id="password-hint">
+            Stored encrypted on this server, so the feed can sign in to Podimo on its own.
+            The feed URL you get is a random token; your password is not part of it.
+          </p>
+          <input type="password" name="password" id="password" required autocomplete="current-password"
+            aria-describedby="password-hint">
+        </div>
+      </div>
+    </fieldset>
+    {% endif %}
 
-  <input type="submit" value="Create RSS URL" />
-</form>
+    <fieldset class="group">
+      <legend>The show</legend>
+      <div class="group__fields">
+        <div class="field">
+          <label for="podcast_id">Podcast ID</label>
+          <p class="hint" id="podcast_id-hint">
+            The last part of the show's web address:
+            <code>open.podimo.com/podcast/<strong>this-part</strong></code>
+          </p>
+          <input type="text" name="podcast_id" id="podcast_id" class="mono" required pattern="[0-9a-fA-F\-]+"
+            title="A podcast ID contains only the letters a&ndash;f, digits, and hyphens."
+            autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="podcast_id-hint">
+        </div>
 
+        <div class="row">
+          <div class="field">
+            <label for="region">Region</label>
+            <p class="hint" id="region-hint">The Podimo store your account belongs to.</p>
+            <div class="select">
+              <select name="region" id="region" aria-describedby="region-hint">
+                {% for (country_code, region) in regions %}
+                <option value="{{ country_code }}">{{ region }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="locale">Language</label>
+            <p class="hint" id="locale-hint">Language for show and episode text.</p>
+            <div class="select">
+              <select name="locale" id="locale" aria-describedby="locale-hint">
+                {% for locale in locales %}
+                <option>{{ locale }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button type="submit" class="btn btn--primary">Create feed URL</button>
+    </div>
+  </form>
+</div>
+
+<details class="help">
+  <summary>Signed in to Podimo with Apple, Facebook or Google?</summary>
+  <div class="help__body">
+    <p class="hint">
+      Those buttons never give Podimo a password, and this tool needs one. Set a normal password on your
+      account first &mdash; you can keep using the social buttons in the Podimo app afterwards.
+    </p>
+    <ol class="steps" role="list">
+      <li>Sign in to Podimo the way you normally do.</li>
+      <li>
+        Open your account settings and note the email address on the account. With Sign in with Apple it looks
+        like <code>abcdefg@privaterelay.appleid.com</code>.
+      </li>
+      <li>Sign out of Podimo.</li>
+      <li>On the sign-in screen choose <strong>Forgot password</strong> and enter that email address.</li>
+      <li>Open the reset link Podimo emails you and choose a password.</li>
+      <li>
+        Sign in once with that email address and password, skipping the Apple, Facebook and Google buttons,
+        to confirm the pair works.
+      </li>
+      <li>Enter the same email address and password in the form above.</li>
+    </ol>
+  </div>
+</details>
 {% endblock %}

@@ -21,11 +21,11 @@ ssh yourusername@theIP-addressofyourpi
 
 ```sh
 sudo apt-get update && sudo apt-get upgrade -y
-sudo apt-get install git libxml2-dev libxslt-dev python3-venv -y
+sudo apt-get install git python3-venv -y
 export EDITOR=nano
 ```
 
-6. Now follow step 1 and 2 from the README file, which can be found [here](https://github.com/ThijsRay/podimo)
+6. Now follow step 1 and 2 of "Installing directly on a server" from the README file, which can be found [here](https://github.com/JoooostB/podimo)
 
 ### Finetuning your configuration before launch
 7. Good work! Now go to [ScraperAPI](https://scraperapi.com) and create a free account. After signing up you'll immediately see an API key. Copy this for later use.

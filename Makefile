@@ -41,7 +41,7 @@ update: VENV
 	fi
 	echo "Updating dependencies..."
 	source venv/bin/activate
-	pip install -r requirements.txt >/dev/null
+	pip install . >/dev/null
 	echo "Updated to version $$UPDATE_GIT_TAG"
 	if test -f ".env"; then
 		if test -r ".env"; then

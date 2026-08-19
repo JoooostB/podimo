@@ -1,125 +1,698 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
 
 <head>
-  <title>Podimo-to-RSS converter</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Tells the UA both themes are supported so form controls, scrollbars and
+       the canvas match the palette below instead of forcing a light rendering. -->
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Turn a Podimo show into a private RSS feed that any podcast app can subscribe to.">
+  <title>{% block title %}Podimo to RSS{% endblock %}</title>
   <style>
-    html {
-      max-width: 80ch;
-      /* larger spacing on larger screens, very small spacing on tiny screens */
-      padding: calc(1vmin + .5rem);
-      /* shorthand for margin-left/margin-right */
-      margin-inline: auto;
-      /* use system font stack: https://developer.mozilla.org/en-US/docs/Web/CSS/font-family */
-      font-family: system-ui;
-      background-color: #eeeeee;
-    }
+    /* ------------------------------------------------------------------
+       Design tokens
+       Light palette lives on :root; the dark media query only re-points the
+       same token names, so every component stays theme-agnostic.
+       All text/background pairs below were checked against WCAG 2.2 SC 1.4.3
+       and clear 4.5:1 in both themes (most clear 6:1).
+       ------------------------------------------------------------------ */
+    :root {
+      color-scheme: light;
 
-    /* increase line-height for everything except headings */
-    body :not(:is(h1, h2, h3, h4, h5, h6)) {
-      line-height: 1.75;
-    }
+      --paper: #F4F3F8;
+      --surface: #FFFFFF;
+      --sunken: #F6F5FB;
+      --ink: #14131A;
+      --muted: #5D5A6B;
+      /* 6.0:1 on --paper */
+      --line: #E3E1EC;
+      --line-strong: #C9C6D8;
 
-    form {
-      padding-top: 1rem;
-    }
+      --accent: #5B3DF5;
+      /* 6.1:1 on --surface */
+      --accent-strong: #4A2EE0;
+      --accent-on: #FFFFFF;
+      /* 6.1:1 on --accent */
+      --accent-soft: #EFEBFF;
+      --glow: rgba(91, 61, 245, .09);
 
-    *:not(:is(h1, h2, h3, h4, h5, h6)) {
-      /* fluid sizing: https://frontaid.io/blog/fluid-typography-2d-css-locks-clamp/ */
-      font-size: clamp(1rem, 0.909rem + 0.45vmin, 1.25rem);
-    }
+      --danger-ink: #A81B12;
+      /* 6.5:1 on --danger-soft */
+      --danger-soft: #FDECEA;
+      --danger-line: #F0B7B1;
 
-    select,
-    button,
-    input {
-      border: 0;
-      width: 100%;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      font-size: 1rem;
-      background-color: #fff;
-      color: #000;
-    }
+      --caution-ink: #6B4A0B;
+      /* 7.4:1 on --caution-soft */
+      --caution-soft: #FFF4E0;
+      --caution-line: #E7C88C;
 
-    input[type=submit] {
-      margin: 1rem 0 2rem 0;
-    }
+      --shadow: 0 1px 2px rgba(20, 19, 26, .05), 0 18px 40px -28px rgba(20, 19, 26, .45);
 
-    form:invalid input[type=submit] {
-      /* pointer-events: none; */
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
+      --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
 
-    input:invalid {
-      background: url("data:image/svg+xml,%3Csvg%20width%3D%221.0625em%22%20id%3D%22triangle%22%20height%3D%221em%22%20viewBox%3D%220%200%2017%2016%22%20fill%3D%22black%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M8.982%201.566a1.13%201.13%200%200%200-1.96%200L.165%2013.233c-.457.778.091%201.767.98%201.767h13.713c.889%200%201.438-.99.98-1.767L8.982%201.566zM8%205a.905.905%200%200%200-.9.995l.35%203.507a.552.552%200%200%200%201.1%200l.35-3.507A.905.905%200%200%200%208%205zm.002%206a1%201%200%201%200%200%202%201%201%200%200%200%200-2z%22%20%2F%3E%3C%2Fsvg%3E%0A") no-repeat 95% 50% #ffffff;
-      background-size: 1.5rem;
-    }
-
-    details {
-      padding: 1rem 0;
-      cursor: pointer;
-    }
-
-    details>summary {
-      padding: 1rem;
-      background-color: #cccccc;
-    }
-
-    footer {
-      margin: 1rem 0 2rem 0;
-      background-color: #cccccc;
-      padding: 1rem;
-    }
-
-    details>ol {
-      margin: 0;
-      background-color: #e6e6e6;
-      padding: 1rem 2rem 1rem 3rem;
-    }
-
-    #triangle {
-      display: none;
+      --radius-card: 14px;
+      --radius-field: 9px;
     }
 
     @media (prefers-color-scheme: dark) {
-      html {
-        color: #fff;
-        background-color: #000;
-      }
+      :root {
+        color-scheme: dark;
 
-      details>summary {
-        background-color: #262626;
-      }
+        --paper: #0D0C12;
+        --surface: #16151E;
+        --sunken: #1E1C28;
+        --ink: #EDECF3;
+        --muted: #A5A1B4;
+        /* 7.3:1 on --surface */
+        --line: #2A2835;
+        --line-strong: #3D3A4C;
 
-      details>ol {
-        background-color: #404040;
-      }
+        --accent: #A794FF;
+        /* 7.3:1 on --surface */
+        --accent-strong: #C3B6FF;
+        --accent-on: #14131A;
+        /* 8.3:1 on --accent */
+        --accent-soft: #241F3B;
+        --glow: rgba(167, 148, 255, .10);
 
-      footer {
-        background-color: #262626;
-      }
+        --danger-ink: #FFB4AB;
+        /* 10:1 on --danger-soft */
+        --danger-soft: #2E1614;
+        --danger-line: #6B2C26;
 
-      a {
-        color: #eee;
-      }
+        --caution-ink: #F0CF8E;
+        /* 10.6:1 on --caution-soft */
+        --caution-soft: #2A2110;
+        --caution-line: #5C4A22;
 
-      select,
-      button,
-      input {
-        background-color: #262626;
-        color: #fff;
+        --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 18px 44px -28px rgba(0, 0, 0, .9);
       }
+    }
 
-      input:invalid {
-        background: url("data:image/svg+xml,%3Csvg%20width%3D%221.0625em%22%20id%3D%22triangle%22%20height%3D%221em%22%20viewBox%3D%220%200%2017%2016%22%20fill%3D%22white%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20fill-rule%3D%22evenodd%22%20d%3D%22M8.982%201.566a1.13%201.13%200%200%200-1.96%200L.165%2013.233c-.457.778.091%201.767.98%201.767h13.713c.889%200%201.438-.99.98-1.767L8.982%201.566zM8%205a.905.905%200%200%200-.9.995l.35%203.507a.552.552%200%200%200%201.1%200l.35-3.507A.905.905%200%200%200%208%205zm.002%206a1%201%200%201%200%200%202%201%201%200%200%200%200-2z%22%20%2F%3E%3C%2Fsvg%3E%0A") no-repeat 95% 50% #404040;
-        background-size: 1.5rem;
+    /* ------------------------------------------------------------------
+       Base
+       ------------------------------------------------------------------ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      padding: clamp(1.5rem, 5vw, 4rem) clamp(1rem, 4vw, 2rem) clamp(2rem, 6vw, 4rem);
+      background-color: var(--paper);
+      background-image: radial-gradient(70rem 34rem at 50% -14rem, var(--glow), transparent 70%);
+      background-repeat: no-repeat;
+      color: var(--ink);
+      font-family: var(--font-body);
+      /* Fluid body size, held between 16px and 17px so line length stays sane. */
+      font-size: clamp(1rem, 0.97rem + 0.16vw, 1.0625rem);
+      line-height: 1.6;
+    }
+
+    .shell {
+      max-width: 40rem;
+      margin-inline: auto;
+    }
+
+    h1 {
+      margin: 0 0 .6rem;
+      font-size: clamp(1.65rem, 1.3rem + 1.6vw, 2.2rem);
+      line-height: 1.15;
+      letter-spacing: -.022em;
+      font-weight: 700;
+    }
+
+    h2 {
+      margin: 2rem 0 .75rem;
+      font-size: 1.1rem;
+      line-height: 1.3;
+      letter-spacing: -.01em;
+      font-weight: 700;
+    }
+
+    p {
+      margin: 0 0 1rem;
+    }
+
+    .lede {
+      margin-bottom: 1.75rem;
+      max-width: 52ch;
+      color: var(--muted);
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration-thickness: .08em;
+      text-underline-offset: .18em;
+    }
+
+    a:hover {
+      color: var(--accent-strong);
+    }
+
+    code {
+      font-family: var(--font-mono);
+      font-size: .88em;
+      background: var(--sunken);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      padding: .08em .35em;
+      overflow-wrap: anywhere;
+    }
+
+    code strong {
+      color: var(--accent);
+    }
+
+    /* One consistent, high-contrast focus ring for every interactive element.
+       Offset keeps it legible even on the filled accent button. */
+    *:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* ------------------------------------------------------------------
+       Card + masthead lockup
+       The chip pair is the page's signature: it states the conversion this
+       tool performs. It duplicates the <h1>, so it is hidden from AT.
+       ------------------------------------------------------------------ */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow);
+      padding: clamp(1.25rem, 4vw, 2.25rem);
+    }
+
+    .lockup {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      margin: 0 0 1.25rem;
+    }
+
+    .chip {
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      letter-spacing: .1em;
+      padding: .25rem .65rem;
+      border-radius: 999px;
+      border: 1px solid var(--line-strong);
+      background: var(--sunken);
+      color: var(--muted);
+    }
+
+    .chip--done {
+      border-color: transparent;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .lockup__arrow {
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    /* ------------------------------------------------------------------
+       Form
+       ------------------------------------------------------------------ */
+    .group {
+      border: 0;
+      margin: 0;
+      padding: 0;
+      min-width: 0;
+      /* stops fieldset's default min-content width in flex/grid contexts */
+    }
+
+    .group+.group {
+      margin-top: 1.75rem;
+    }
+
+    /* Legends double as the page's structural eyebrows: mono, caps, tracked,
+       with a trailing hairline that separates the groups. The rule lives on
+       the legend rather than on a fieldset border, because a bordered
+       fieldset lets the legend carve an inconsistent notch out of it.
+       Spacing lives on the sibling wrapper because margins on <legend> are
+       unreliable across browsers. */
+    .group>legend {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      width: 100%;
+      padding: 0;
+      font-family: var(--font-mono);
+      font-size: .72rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* Older engines that force legend to display:block degrade to a plain
+       hairline underneath the label, which is still a valid separator. */
+    .group>legend::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: var(--line);
+    }
+
+    .group__fields {
+      margin-top: .95rem;
+    }
+
+    .field {
+      margin-bottom: 1.15rem;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: block;
+      margin-bottom: .3rem;
+      font-weight: 600;
+      font-size: .95rem;
+    }
+
+    .hint {
+      margin: 0 0 .45rem;
+      color: var(--muted);
+      font-size: .85rem;
+      line-height: 1.5;
+    }
+
+    input,
+    select,
+    textarea {
+      display: block;
+      width: 100%;
+      /* 46px: comfortably above the 44px minimum target size (SC 2.5.8). */
+      min-height: 2.875rem;
+      padding: .6rem .75rem;
+      font: inherit;
+      color: var(--ink);
+      background: var(--sunken);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius-field);
+      transition: border-color .15s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: var(--accent);
+    }
+
+    /* :user-invalid only matches after the user has actually interacted, so
+       the form never greets people with red fields. The browser's own
+       validation message is the non-colour cue (SC 1.4.1). */
+    input:user-invalid {
+      border-color: var(--danger-ink);
+    }
+
+    input.mono {
+      font-family: var(--font-mono);
+      font-size: .95rem;
+    }
+
+    .select {
+      position: relative;
+    }
+
+    .select select {
+      appearance: none;
+      -webkit-appearance: none;
+      padding-right: 2.5rem;
+    }
+
+    /* CSS-drawn chevron: no image asset, and it inherits the theme. */
+    .select::after {
+      content: "";
+      position: absolute;
+      right: 1.05rem;
+      top: 50%;
+      width: .45rem;
+      height: .45rem;
+      border-right: 2px solid var(--muted);
+      border-bottom: 2px solid var(--muted);
+      transform: translateY(-70%) rotate(45deg);
+      pointer-events: none;
+    }
+
+    .row {
+      display: grid;
+      gap: 1.15rem;
+    }
+
+    .row>.field {
+      margin-bottom: 0;
+    }
+
+    @media (min-width: 34rem) {
+      .row {
+        grid-template-columns: 1fr 1fr;
       }
+    }
+
+    .actions {
+      margin-top: 1.75rem;
+    }
+
+    /* ------------------------------------------------------------------
+       Buttons
+       ------------------------------------------------------------------ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.875rem;
+      padding: .7rem 1.35rem;
+      font: inherit;
+      font-weight: 600;
+      border: 1px solid transparent;
+      border-radius: var(--radius-field);
+      cursor: pointer;
+      transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+    }
+
+    .btn--primary {
+      width: 100%;
+      background: var(--accent);
+      color: var(--accent-on);
+    }
+
+    .btn--primary:hover {
+      background: var(--accent-strong);
+    }
+
+    .btn--copy {
+      /* Reserves room for the "Copied" state so the row never reflows. */
+      min-width: 10.5rem;
+      background: var(--accent);
+      color: var(--accent-on);
+    }
+
+    .btn--copy:hover {
+      background: var(--accent-strong);
+    }
+
+    /* ------------------------------------------------------------------
+       Result page: the feed URL and its copy control
+       ------------------------------------------------------------------ */
+    .url {
+      min-height: 5.5rem;
+      max-height: 14rem;
+      padding: .85rem .9rem;
+      font-family: var(--font-mono);
+      font-size: .9rem;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      /* Long, space-free URLs must wrap rather than scroll sideways. */
+      overflow-wrap: anywhere;
+      resize: vertical;
+      /* Progressive enhancement: grows to fit where supported. */
+      field-sizing: content;
+    }
+
+    .copy-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: .5rem 1rem;
+      margin: .9rem 0 1.75rem;
+    }
+
+    /* Kept in the layout even while empty so the live region is registered
+       before its first update; an empty <p> occupies no height. */
+    .copy-status {
+      margin: 0;
+      color: var(--accent);
+      font-size: .9rem;
+      font-weight: 600;
+    }
+
+    .back {
+      margin: 1.75rem 0 0;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--line);
+    }
+
+    /* ------------------------------------------------------------------
+       Panels: notices, cautions and the error summary
+       ------------------------------------------------------------------ */
+    .panel {
+      margin: 0 0 1.5rem;
+      padding: .95rem 1.15rem;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-field);
+      background: var(--sunken);
+    }
+
+    .panel:last-child {
+      margin-bottom: 0;
+    }
+
+    .panel p {
+      margin-bottom: .5rem;
+    }
+
+    .panel> :last-child {
+      margin-bottom: 0;
+    }
+
+    .panel__title {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      margin: 0 0 .45rem;
+      font-weight: 700;
+    }
+
+    .panel ul {
+      margin: 0;
+      padding-left: 1.2rem;
+    }
+
+    .panel li+li {
+      margin-top: .25rem;
+    }
+
+    .panel--error {
+      background: var(--danger-soft);
+      border-color: var(--danger-line);
+      color: var(--danger-ink);
+    }
+
+    .panel--caution {
+      background: var(--caution-soft);
+      border-color: var(--caution-line);
+      color: var(--caution-ink);
+    }
+
+    .panel--accent {
+      background: var(--accent-soft);
+      border-color: transparent;
+    }
+
+    /* Shape + glyph, so status is never carried by colour alone. */
+    .badge {
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.4rem;
+      height: 1.4rem;
+      border: 2px solid currentColor;
+      border-radius: 50%;
+      font-size: .85rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    /* ------------------------------------------------------------------
+       Numbered steps. These lists are genuine sequences, so the ordinals
+       carry information. role="list" restores semantics that Safari drops
+       when list-style is removed.
+       ------------------------------------------------------------------ */
+    .steps {
+      list-style: none;
+      counter-reset: step;
+      margin: 0;
+      padding: 0;
+    }
+
+    .steps li {
+      position: relative;
+      margin-bottom: .8rem;
+      padding-left: 2.4rem;
+    }
+
+    .steps li:last-child {
+      margin-bottom: 0;
+    }
+
+    .steps li::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: .12rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.65rem;
+      height: 1.65rem;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-family: var(--font-mono);
+      font-size: .78rem;
+      font-weight: 600;
+    }
+
+    /* ------------------------------------------------------------------
+       Disclosure
+       ------------------------------------------------------------------ */
+    .help {
+      margin-top: 1.25rem;
+    }
+
+    .help summary {
+      display: flex;
+      align-items: center;
+      gap: .7rem;
+      list-style: none;
+      padding: .9rem 1.15rem;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-card);
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .help summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .help summary::before {
+      content: "";
+      flex: none;
+      width: .45rem;
+      height: .45rem;
+      border-right: 2px solid var(--accent);
+      border-bottom: 2px solid var(--accent);
+      transform: rotate(-45deg);
+      transition: transform .2s ease;
+    }
+
+    .help[open] summary::before {
+      transform: rotate(45deg);
+    }
+
+    .help[open] summary {
+      border-radius: var(--radius-card) var(--radius-card) 0 0;
+      border-bottom-color: transparent;
+    }
+
+    .help__body {
+      padding: .35rem 1.15rem 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-top: 0;
+      border-radius: 0 0 var(--radius-card) var(--radius-card);
+    }
+
+    /* ------------------------------------------------------------------
+       Footer
+       ------------------------------------------------------------------ */
+    .site-footer {
+      margin-top: 2rem;
+      text-align: center;
+      color: var(--muted);
+      font-size: .875rem;
+      line-height: 1.65;
+    }
+
+    .site-footer p {
+      margin: 0 0 .35rem;
+    }
+
+    .site-footer p:last-child {
+      margin-bottom: 0;
+    }
+
+    .site-footer abbr {
+      text-decoration: none;
+    }
+
+    /* The upstream credit is deliberately the loudest thing in the footer:
+       full ink colour and a panel of its own, above the fork's own metadata. */
+    .credit {
+      margin: 0 0 .9rem;
+      padding: .9rem 1.15rem;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-field);
+      color: var(--ink);
+      font-size: .9375rem;
+      text-align: left;
+    }
+
+    .credit__lead {
+      display: block;
+      margin-bottom: .2rem;
+      font-weight: 600;
+    }
+
+    /* ------------------------------------------------------------------
+       Motion (SC 2.3.3)
+       ------------------------------------------------------------------ */
+    @media (prefers-reduced-motion: reduce) {
+
+      *,
+      *::before,
+      *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
   </style>
 </head>
 
 <body>
-  {% block body %}
-  {% endblock %}
+  <div class="shell">
+    <main id="main">
+      {% block body %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+      <p class="credit">
+        <span class="credit__lead">Built on Thijs Raymakers' original Podimo-to-RSS converter.</span>
+        Thijs wrote the tool this fork is based on — the source of the original lives at
+        <a href="https://github.com/ThijsRay/podimo">ThijsRay/podimo</a>. If this saves you time, please
+        <a href="https://www.buymeacoffee.com/thijsr">buy Thijs a coffee</a>. That link goes to him, not to this fork.
+      </p>
+      <p>
+        This fork's source is on <a href="https://github.com/JoooostB/podimo">GitHub</a>, licensed under the
+        <abbr title="European Union Public Licence, version 1.2">EUPL-1.2</abbr>.
+      </p>
+      <p>Not affiliated with or endorsed by Podimo.</p>
+    </footer>
+  </div>
+
+  {% block scripts %}{% endblock %}
 </body>
 
 </html>

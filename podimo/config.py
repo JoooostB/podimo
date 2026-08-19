@@ -17,20 +17,18 @@
 # See the Licence for the specific language governing
 # permissions and limitations under the Licence.
 
-import os
 import logging
+import os
+
 from dotenv import dotenv_values
 
 # Load variables from the `.env` file first,
 # and overwrite them with environment variables
-config = {
-    **dotenv_values(".env"),
-    **os.environ
-}
+config = {**dotenv_values(".env"), **os.environ}
 
 # You can overwrite the following four values with environmental variables
 # - `PODIMO_HOSTNAME`: the hostname that is displayed to the user.
-#                      This defaults to "podimo.thijs.sh".
+#                      This defaults to "localhost:12104".
 # - `PODIMO_BIND_HOST`: to what IP and port the Python webserver should bind.
 #                       Defaults to "127.0.0.1:12104"
 # - `PODIMO_PROTOCOL`: what protocol is being used for all links that are
@@ -44,11 +42,16 @@ SCRAPER_API = config.get("SCRAPER_API", None)
 CACHE_DIR = os.path.abspath(str(config.get("CACHE_DIR", "./cache")))
 BLOCK_LIST_FILE = str(config.get("BLOCK_LIST_FILE", "./.block-list"))
 
+# Key used to encrypt stored feed credentials (a Fernet key: 32 url-safe
+# base64-encoded bytes). When unset, a key is generated on first use and
+# stored in CACHE_DIR/feed_tokens.key
+PODIMO_ENCRYPTION_KEY = config.get("PODIMO_ENCRYPTION_KEY", None)
+
 # Enable extra logging in debugging mode
-DEBUG = bool(str(config.get("DEBUG", None)).lower() in ['true', '1', 't', 'y', 'yes'])
+DEBUG = bool(str(config.get("DEBUG", None)).lower() in ["true", "1", "t", "y", "yes"])
 
 # Enable local credentials
-LOCAL_CREDENTIALS = bool(str(config.get("LOCAL_CREDENTIALS", None)).lower() in ['true', '1', 't', 'y', 'yes'])
+LOCAL_CREDENTIALS = bool(str(config.get("LOCAL_CREDENTIALS", None)).lower() in ["true", "1", "t", "y", "yes"])
 PODIMO_EMAIL = config.get("PODIMO_EMAIL", None)
 PODIMO_PASSWORD = config.get("PODIMO_PASSWORD", None)
 
@@ -57,7 +60,7 @@ PODIMO_PASSWORD = config.get("PODIMO_PASSWORD", None)
 GRAPHQL_URL = "https://podimo.com/graphql"
 
 # Whether login tokens should be cached on disk, or only in memory
-STORE_TOKENS_ON_DISK = bool(str(config.get("STORE_TOKENS_ON_DISK", True)).lower() in ['true', '1', 't', 'y', 'yes'])
+STORE_TOKENS_ON_DISK = bool(str(config.get("STORE_TOKENS_ON_DISK", True)).lower() in ["true", "1", "t", "y", "yes"])
 
 # The time that a token is stored in cache
 TOKEN_CACHE_TIME = int(config.get("TOKEN_CACHE_TIME", 3600 * 24 * 5))  # seconds = 5 days by default
@@ -69,30 +72,20 @@ PODCAST_CACHE_TIME = int(config.get("PODCAST_CACHE_TIME", "21600"))  # Default =
 HEAD_CACHE_TIME = int(config.get("HEAD_CACHE_TIME", 7 * 60 * 60 * 24))  # seconds = 7 days by default
 
 # Whether the feeds generated with this tool should show up in public podcast catalogues
-PUBLIC_FEEDS = bool(str(config.get("PUBLIC_FEEDS", None)).lower() in ['true', '1', 't', 'y', 'yes'])
+PUBLIC_FEEDS = bool(str(config.get("PUBLIC_FEEDS", None)).lower() in ["true", "1", "t", "y", "yes"])
 
-LOCALES = [
-        'nl-NL',
-        'de-DE',
-        'da-DK',
-        'es-ES',
-        'en-US',
-        'es-MX',
-        'no-NO',
-        'fi-FI',
-        'en-GB'
-]
+LOCALES = ["nl-NL", "de-DE", "da-DK", "es-ES", "en-US", "es-MX", "no-NO", "fi-FI", "en-GB"]
 REGIONS = [
-        ('nl', 'Nederland'),
-        ('de', 'Deutschland'),
-        ('dk', 'Danmark'),
-        ('es', 'España'),
-        ('latam', 'America latina'),
-        ('en', 'International'),
-        ('mx', 'Mexico'),
-        ('no', 'Norge'),
-        ('fi', 'Suomi'),
-        ('uk', 'United Kingdom')
+    ("nl", "Nederland"),
+    ("de", "Deutschland"),
+    ("dk", "Danmark"),
+    ("es", "España"),
+    ("latam", "America latina"),
+    ("en", "International"),
+    ("mx", "Mexico"),
+    ("no", "Norge"),
+    ("fi", "Suomi"),
+    ("uk", "United Kingdom"),
 ]
 
 # If DEBUG mode is enabled, modify the logging output
@@ -100,18 +93,14 @@ log_level = logging.INFO
 if DEBUG:
     log_level = logging.DEBUG
 
-logging.basicConfig(
-    format="%(levelname)s | %(asctime)s | %(message)s",
-    datefmt="%Y-%m-%dT%H:%M:%SZ",
-    level=log_level
-)
+logging.basicConfig(format="%(levelname)s | %(asctime)s | %(message)s", datefmt="%Y-%m-%dT%H:%M:%SZ", level=log_level)
 
 # Load block list from file '.block-list' if it exists
 BLOCKED = set()
 if os.path.exists(BLOCK_LIST_FILE):
-    with open (BLOCK_LIST_FILE, 'r') as file:
+    with open(BLOCK_LIST_FILE) as file:
         for line in file:
             line = line.strip()
-            if line and not line.startswith('#'): 
-                line = line.split(' ', 1)[0]
+            if line and not line.startswith("#"):
+                line = line.split(" ", 1)[0]
                 BLOCKED.add(line)

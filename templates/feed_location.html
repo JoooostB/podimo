@@ -1,28 +1,125 @@
 {% extends "base.html" %}
 
+{% block title %}Your feed URL &middot; Podimo to RSS{% endblock %}
+
 {% block body %}
-Assuming your credentials were correct, your Podimo-to-RSS feed can be found at<br />
-<p>
-  {{ url }}
-</p>
+<div class="card">
+  <p class="lockup" aria-hidden="true">
+    <span class="chip">podimo</span>
+    <span class="lockup__arrow">&rarr;</span>
+    <span class="chip chip--done">rss</span>
+  </p>
 
-Copy this link into your podcast player (only works if it supports custom private RSS feeds).
-<br />
-<br />
+  <h1>Your feed URL is ready</h1>
+  <p class="lede">
+    This is a private feed for one show. Add it to a podcast app that supports feeds by URL, and new
+    episodes will show up there.
+  </p>
 
-<div id="button"></div>
+  <div class="field">
+    <label for="feed-url">Feed URL</label>
+    {#
+      A read-only textarea rather than a single-line input: long URLs wrap and
+      stay fully readable, it is selectable and copyable by keyboard alone
+      (Ctrl/Cmd+A then Ctrl/Cmd+C), and select() gives the copy button a
+      reliable fallback on non-HTTPS origins.
+    #}
+    <textarea id="feed-url" class="url" rows="3" readonly spellcheck="false" autocapitalize="off"
+      autocomplete="off">{{ url }}</textarea>
+  </div>
+
+  <div class="copy-row">
+    {# Hidden until the script confirms a working copy path, so no dead button appears without JS. #}
+    <button type="button" id="copy-btn" class="btn btn--copy" hidden>Copy feed URL</button>
+    <p id="copy-status" class="copy-status" role="status"></p>
+  </div>
+
+  <div class="panel panel--caution">
+    <p class="panel__title">
+      <span class="badge" aria-hidden="true">!</span>
+      Keep this link private
+    </p>
+    {% if '@' in url %}
+    <p>
+      Your Podimo email address and password are part of this URL &mdash; that is how your podcast app signs
+      in. Anyone who gets the link can use your Podimo account, so treat it exactly like a password: don't
+      post it anywhere public and don't share it.
+    </p>
+    {% else %}
+    <p>
+      This URL is a key to your feed on its own. Anyone who gets it can subscribe, so don't post it anywhere
+      public.
+    </p>
+    {% endif %}
+  </div>
+
+  <h2>Add it to your podcast app</h2>
+  <ol class="steps" role="list">
+    <li>Copy the feed URL above.</li>
+    <li>
+      In your podcast app, look for <strong>Add a show by URL</strong>, <strong>Add RSS feed</strong> or
+      <strong>Subscribe by URL</strong>. Pocket Casts, Overcast, AntennaPod and Apple Podcasts all have it.
+    </li>
+    <li>Paste the URL and confirm. Episodes may take a moment to load the first time.</li>
+  </ol>
+
+  <p class="back"><a href="./">Create another feed URL</a></p>
+</div>
+{% endblock %}
+
+{% block scripts %}
 <script>
-  let url = "{{ url }}"
-  function copy() {
-    navigator.clipboard.writeText(url).then(() => {
-      document.getElementById('copy').innerHTML = "Copied!";
-      setTimeout(setButtonDiv, 2000);
-    });
-  }
-  function setButtonDiv() {
-    document.getElementById("button").innerHTML = "<button id='copy' onclick='copy()'>Copy to your clipboard</button>";
-  }
-  setButtonDiv();
-</script>
+  (function () {
+    var field = document.getElementById('feed-url');
+    var button = document.getElementById('copy-btn');
+    var status = document.getElementById('copy-status');
+    if (!field || !button || !status) return;
 
+    // Self-hosted installs are often plain HTTP, where navigator.clipboard is
+    // undefined. Fall back to execCommand; if neither works, leave the button
+    // hidden and let people select the text themselves.
+    var async = !!(navigator.clipboard && window.isSecureContext);
+    var legacy = !!(document.queryCommandSupported && document.queryCommandSupported('copy'));
+    if (!async && !legacy) return;
+
+    button.hidden = false;
+
+    var label = button.textContent;
+    var timer;
+
+    function report(copied) {
+      window.clearTimeout(timer);
+      button.textContent = copied ? 'Copied' : 'Copy feed URL';
+      status.textContent = copied
+        ? 'Feed URL copied to your clipboard.'
+        : 'Copying failed. The URL is selected — press Ctrl+C or Cmd+C to copy it.';
+      timer = window.setTimeout(function () {
+        button.textContent = label;
+        status.textContent = '';
+      }, 5000);
+    }
+
+    function copyBySelection() {
+      field.focus();
+      field.select();
+      var copied = false;
+      try {
+        copied = document.execCommand('copy');
+      } catch (error) {
+        copied = false;
+      }
+      report(copied);
+    }
+
+    button.addEventListener('click', function () {
+      if (async) {
+        navigator.clipboard.writeText(field.value).then(function () {
+          report(true);
+        }, copyBySelection);
+      } else {
+        copyBySelection();
+      }
+    });
+  })();
+</script>
 {% endblock %}

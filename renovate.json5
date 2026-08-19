@@ -1,0 +1,9 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: ["config:recommended"],
+  // Renovate-managed automerge: it merges once CI is green,
+  // without relying on GitHub branch protection.
+  automerge: true,
+  platformAutomerge: false,
+  ignoreTests: false,
+}
