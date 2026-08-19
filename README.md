@@ -8,7 +8,15 @@
 
 Podimo is a proprietary podcasting player that enables you to listen to various exclusive shows behind a paywall.
 This tool allows you to stream Podimo podcasts with your preferred podcast player, without having to use the Podimo app.
+
+[Docker](#running-with-docker-recommended) ·
+[Kubernetes](#running-on-kubernetes) ·
+[Server install](#installing-directly-on-a-server) ·
+[Beginner tutorial](tutorial.md) ·
+[Configuration](#configuration)
 </div>
+
+---
 
 ## About this fork
 
@@ -16,7 +24,7 @@ This is a fork of [ThijsRay/podimo](https://github.com/ThijsRay/podimo) by Thijs
 
 If this tool is useful to you, consider buying Thijs a coffee:
 
-<a href="https://www.buymeacoffee.com/thijsr"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=&slug=thijsr&button_colour=BD5FFF&font_colour=ffffff&font_family=Poppins&outline_colour=000000&coffee_colour=FFDD00" /></a>
+<a href="https://www.buymeacoffee.com/thijsr"><img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=&slug=thijsr&button_colour=BD5FFF&font_colour=ffffff&font_family=Poppins&outline_colour=000000&coffee_colour=FFDD00" alt="Buy Thijs a coffee" height="40" /></a>
 
 ### What this fork adds
 
