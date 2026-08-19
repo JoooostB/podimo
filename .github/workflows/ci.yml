@@ -24,9 +24,12 @@ jobs:
       - name: Lint
         run: uv run ruff check .
 
-      # Fails on dependencies with known CVEs, which also blocks Renovate automerge
+      # Fails on dependencies with known CVEs, which also blocks Renovate automerge.
+      # PYSEC-2026-2447 (diskcache pickle deserialization) has no fixed release
+      # and needs write access to the local cache dir, which already implies
+      # code execution as the service user. Drop the ignore once a fix ships.
       - name: Audit dependencies
-        run: uv run pip-audit
+        run: uv run pip-audit --ignore-vuln PYSEC-2026-2447
 
       - name: Check formatting
         run: uv run ruff format --check .
